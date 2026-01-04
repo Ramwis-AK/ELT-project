@@ -19,3 +19,118 @@ FROM RAW.STG_FB_ADS_DEDUPLICATED
 WHERE ADSET_ID IS NOT NULL;
 
 SELECT COUNT(*) FROM ANALYTICS.DIM_ADSET;
+CREATE OR REPLACE TABLE ANALYTICS.DIM_CAMPAIGN AS SELECT
+    CAMPAIGN_ID,
+    CAMPAIGN_NAME,
+    OBJECTIVE,
+    'ACTIVE' AS is_active,
+    MIN(ad_date) AS created_date,
+    MIN(ad_date) AS valid_form,
+    TO_DATE('2099-12-31') as valid_to,
+    TRUE AS is_current
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+GROUP BY CAMPAIGN_ID, CAMPAIGN_NAME, OBJECTIVE;
+
+SELECT COUNT(*) FROM ANALYTICS.DIM_CAMPAIGN;
+SELECT * FROM ANALYTICS.DIM_CAMPAIGN LIMIT 5;
+
+CREATE OR REPLACE TABLE ANALYTICS.DIM_AD AS SELECT
+    AD_ID,
+    AD_NAME,
+    ADSET_ID,
+    MIN(ad_date) AS created_date,
+    MIN(ad_date) AS valid_form,
+    TO_DATE('2099-12-31') as valid_to,
+    TRUE AS is_current
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+GROUP BY AD_ID, AD_NAME, ADSET_ID;
+
+SELECT COUNT(*) FROM ANALYTICS.DIM_AD;
+
+CREATE OR REPLACE TABLE ANALYTICS.DIM_DATE AS 
+WITH date_range AS (
+    SELECT DATEADD(DAY, SEQ4(), DATE('2020-01-01')) AS date
+    FROM TABLE(GENERATOR(ROWCOUNT => 2000))
+) 
+SELECT
+    date,
+    YEAR(date) AS year,
+    MONTH(date) AS month,
+    DAY(date) AS day,
+    WEEKOFYEAR(date) AS week,
+    QUARTER(date) AS quarter,
+    DAYOFWEEK(date) AS day_of_week,
+    DAYOFWEEK(date) IN (6, 7) AS is_weekend,
+    TO_CHAR(date, 'MMMM') AS month_name
+FROM date_range
+WHERE date BETWEEN DATE('2020-01-01') AND DATE('2024-12-31')
+ORDER BY date;
+
+SELECT COUNT(*) FROM ANALYTICS.DIM_DATE;
+
+CREATE OR REPLACE TABLE ANALYTICS.FACT_AD_DAILY AS
+WITH enriched AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY s.ad_date, s.AD_ID) AS fact_id,
+        s.ad_date,
+        s.CAMPAIGN_ID,
+        s.ADSET_ID,
+        s.ACCOUNT_ID,
+        s.AD_ID,
+        s.IMPRESSIONS,
+        s.CLICKS,
+        s.SPEND,
+        s.REACH,
+        s.FREQUENCY,
+        s.CTR,
+        s.CPM,
+        s.CPC,
+        LAG(s.CPC, 1) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date) AS cpc_prev_day,
+        ROW_NUMBER() OVER (PARTITION BY s.ad_date ORDER BY s.CPC ASC) AS daily_rank_by_cpc_asc,
+        RANK() OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date DESC ROWS BETWEEN CURRENT ROW AND 6 FOLLOWING) AS rank_7d_window,
+        SUM(s.SPEND) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date) AS cumulative_spend_per_ad,
+        ROUND(AVG(s.CTR) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 4) AS ctr_7d_avg
+    FROM RAW.STG_FB_ADS_DEDUPLICATED s
+)
+SELECT
+    fact_id,
+    ad_date,
+    CAMPAIGN_ID,
+    ADSET_ID,
+    ACCOUNT_ID,
+    AD_ID,
+    IMPRESSIONS,
+    CLICKS,
+    SPEND,
+    REACH,
+    FREQUENCY,
+    CTR,
+    CPM,
+    CPC,
+    cpc_prev_day,
+    daily_rank_by_cpc_asc,
+    rank_7d_window,
+    cumulative_spend_per_ad,
+    ctr_7d_avg
+FROM enriched;
+
+SELECT 
+    COUNT(*) AS total_facts,
+    COUNT(DISTINCT CAMPAIGN_ID) AS unique_campaigns,
+    COUNT(DISTINCT AD_ID) AS unique_ads,
+    SUM(SPEND) AS total_spend,
+    AVG(CPC) AS avg_cpc
+FROM ANALYTICS.FACT_AD_DAILY;
+
+SELECT
+    AD_ID,
+    ad_date,
+    CPC,
+    cpc_prev_day,
+    COALESCE(ROUND(CPC - cpc_prev_day, 4), 0) AS cpc_change,
+    daily_rank_by_cpc_asc,
+    cumulative_spend_per_ad,
+    ctr_7d_avg
+FROM ANALYTICS.FACT_AD_DAILY
+ORDER BY AD_ID, ad_date
+LIMIT 20;
