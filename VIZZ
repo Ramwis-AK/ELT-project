@@ -1,0 +1,184 @@
+//VIZ #1 TREND NAKLADOV NA KLIK CPC PODLA MESIAVOV
+SELECT
+    CONCAT(d.year, '-', LPAD(d.month, 2, '0')) AS year_month, d.month_name,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(MIN(f.CPC), 4) AS min_cpc,
+    ROUND(MAX(f.CPC), 4) AS max_cpc,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(SUM(f.SPEND), 2) AS monthly_spend,
+    COUNT(DISTINCT f.AD_ID) AS unique_ads
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+GROUP BY d.year, d.month, d.month_name
+ORDER BY d.year, d.month;
+
+//VIZ #2 TOP 10 KAMPANII PODLA VZDAVKOV
+SELECT TOP 10
+    c.CAMPAIGN_NAME,
+    c.OBJECTIVE,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr_percent,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 4) AS avg_cpm,
+    COUNT(DISTINCT f.ad_date) AS days_active,
+    COUNT(DISTINCT f.AD_ID) AS num_ads
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.campaign_id
+GROUP BY c.campaign_id, c.campaign_name, c.objective
+ORDER BY total_spend DESC;
+
+//VIZ #3 EFEKTIVNOST KAMPANII
+SELECT
+    c.CAMPAIGN_NAME,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    SUM(f.REACH) AS total_reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    SUM(f.CLICKS) AS total_clicks,
+    COUNT(DISTINCT f.AD_ID) AS num_ads,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.REACH), 0), 4) AS spend_per_reach,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.CLICKS), 0), 4) AS spend_per_click,
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.campaign_id = c.campaign_id
+GROUP BY c.campaign_id, c.CAMPAIGN_NAME
+HAVING SUM(f.IMPRESSIONS) > 50
+ORDER BY total_spend DESC;
+
+//VIZ #4 CTR - CLICK THROUGH RATE
+
+SELECT
+    c.OBJECTIVE,
+    COUNT(DISTINCT f.AD_ID) AS num_ads,
+        ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(MIN(f.CTR), 4) AS min_ctr,
+    ROUND(MAX(f.CTR), 4) AS max_ctr,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+WHERE c.objective IS NOT NULL
+GROUP BY c.objective
+ORDER BY avg_ctr DESC;
+
+//VIZ #5 TOP ANNONCE
+SELECT TOP 15
+    a.AD_NAME,
+    s.ADSET_NAME,
+    c.CAMPAIGN_NAME,
+    COUNT(DISTINCT f.ad_date) AS days_active,
+    ROUND(SUM(f.SPEND), 2) AS impressions,
+    SUM(f.IMPRESSIONS) AS impressions,
+    SUM(f.CLICKS) AS clicks,
+    SUM(f.REACH) AS reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 2) AS avg_cpm,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.CLICKS), 0), 4) AS cost_per_click,
+    RANK() OVER (ORDER BY AVG(f.CPC) ASC) AS efficiency_rank
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_AD a ON f.AD_ID = a.AD_ID
+JOIN ANALYTICS.DIM_ADSET s ON a.ADSET_ID = s.ADSET_ID
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+GROUP BY a.AD_ID, a.AD_NAME, s.ADSET_NAME, c.CAMPAIGN_NAME
+HAVING SUM(f.IMPRESSIONS) > 100
+ORDER BY avg_cpc ASC;
+
+//VIZ #6 SEZONOST - VYDAVKY POCAS DNOV
+SELECT
+    d.day_of_week,
+    CASE
+        WHEN d.day_of_week = 1 THEN 'Pondelok'
+        WHEN d.day_of_week = 2 THEN 'Utorok'
+        WHEN d.day_of_week = 3 THEN 'Streda'
+        WHEN d.day_of_week = 4 THEN 'Štvrtok'
+        WHEN d.day_of_week = 5 THEN 'Piatok'
+        WHEN d.day_of_week = 6 THEN 'Sobota'
+        WHEN d.day_of_week = 7 THEN 'Nedeľa'
+    END AS day_name,
+    COUNT(*) AS num_days,
+    ROUND(AVG(f.SPEND), 2) AS avg_daily_spend,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    SUM(f.CLICKS) AS total_clicks,
+    SUM(f.IMPRESSIONS) AS total_impressions
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+GROUP BY d.day_of_week
+ORDER BY d.day_of_week;
+
+//VIZ #7 KUMULATIVNE VYDAVKY
+SELECT
+    d.date,
+    d.month_name,
+    c.CAMPAIGN_NAME,
+    SUM(f.SPEND) AS daily_spend,
+    SUM(SUM(f.SPEND)) OVER (PARTITION BY c.CAMPAIGN_ID ORDER BY d.date) AS cumulative_spend,
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+GROUP BY d.date, d.month_name, c.CAMPAIGN_ID, c.CAMPAIGN_NAME
+ORDER BY c.CAMPAIGN_ID, d.date;
+
+DESC TABLE ANALYTICS.FACT_AD_DAILY;
+
+//VIZ #8 REAGOVANIE NA KOLISANIE
+SELECT
+    f.ad_date,
+    f.AD_ID,
+    ROUND(f.CPC, 4) AS cpc_today,
+    ROUND(f.cpc_prev_day, 4) AS cpc_yesterday,
+    CASE
+        WHEN f.cpc_prev_day IS NOT NULL THEN 0
+        ELSE ROUND(((f.CPC - f.cpc_prev_day) / f.cpc_prev_day) *100, 2)
+    END AS percent_change,
+    f.IMPRESSIONS,
+    f.CLICKS,
+    ROUND(f.SPEND, 2) AS spend
+FROM ANALYTICS.FACT_AD_DAILY f
+WHERE f.cpc_prev_day IS NOT NULL
+ORDER BY f.ad_id, f.ad_date
+LIMIT 50;
+
+
+//VIZ #9 RANKING ANNONCI V 7 DNOCH
+SELECT
+    f.AD_ID,
+    f.ad_date,
+    EXTRACT(WEEK FROM f.ad_date) AS week_number,
+    ROUND(f.CPC, 4) AS cpc,
+    f.rank_7d_window AS rank_in_7day_window,
+    f.CLICKS,
+    f.IMPRESSIONS,
+    CASE
+        WHEN f.rank_7d_window = 1 THEN 'Best Performer'
+        WHEN f.rank_7d_window <= 3 THEN 'TOP 3'
+        WHEN f.rank_7d_window <= 5 THEN 'GOOD'
+        ELSE 'Needs Optimization'
+    END AS performance_tier
+FROM ANALYTICS.FACT_AD_DAILY f
+ORDER BY f.ad_id, f.ad_date, f.rank_7d_window
+LIMIT 100;
+
+
+//VIZ #10 PERFORMANCE DASHBOARD
+SELECT
+    COUNT(DISTINCT f.fact_id) AS total_ad_days,
+    COUNT(DISTINCT f.CAMPAIGN_ID) AS num_campaigns,
+    COUNT(DISTINCT f.AD_ID) AS num_unique_ads,
+    COUNT(DISTINCT f.ad_date) AS days_with_data,
+    ROUND(SUM(f.SPEND), 2) AS total_spend_usd,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    SUM(f.REACH) AS total_reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr_percent,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 2) AS avg_cpm,
+    ROUND(AVG(f.FREQUENCY), 2) AS avg_frequency,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.REACH), 0), 4) AS spend_per_person,
+    MIN(f.ad_date) AS campaign_start,
+    MAX(f.ad_date) AS campaign_end,
+    DATEDIFF(DAY, MIN(f.ad_date), MAX(f.ad_date)) + 1 AS campaign_duration_days
+FROM ANALYTICS.FACT_AD_DAILY f;
