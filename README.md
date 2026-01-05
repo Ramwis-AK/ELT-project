@@ -48,7 +48,7 @@ Hlavné analytické ciele projektu:<br>
     3.	Analyzovať trendy výkonnosti v čase<br>
     4.	Detegovať sezónne vzory a anomálie<br>
     5.	Pripraviť dáta pre dashboardy a reporting
-
+    
 4. ELT architektúra<br>
 Projekt je postavený na princípe ELT, kde:<br>
 •	Extract & Load prebieha priamo zo Snowflake Marketplace do RAW vrstvy<br>
@@ -113,7 +113,7 @@ SELECT MIN(ad_date) AS earliest, MAX(ad_date) AS latest FROM RAW.STG_FB_ADS_INSI
 
 6. TRANSFORM vrstva<br>
 Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.
-6.1 Oprava duplikátov
+<br>6.1 Oprava duplikátov
 ```sql
 SELECT
 ad_date,
