@@ -17,7 +17,8 @@ Dataset z Facebook Ads považujeme za adekvátny najmä z týchto dôvodov:
 •	Platforma: Snowflake Marketplace
 •	Dataset: AD_DATA_FUSION.FACEBOOK_ADS
 •	Primárna tabuľka: ADS_INSIGHTS
-
+<img width="849" height="665" alt="image" src="https://github.com/user-attachments/assets/757b8217-1032-4a2a-8f71-c7dc81f82e18" />
+<img width="891" height="326" alt="image" src="https://github.com/user-attachments/assets/de3dda1b-33ba-4906-af4b-eb883d20a0e9" />
 
 2.2 Štruktúra zdrojových dát
 Zdrojové dáta obsahujú denné metriky reklamných kampaní a sú normalizované do viacerých entít.
@@ -27,7 +28,7 @@ CAMPAIGNS	Metadata o kampaniach
 ADSETS	Skupiny reklám s targetingom
 ADS	Jednotlivé reklamné kreatívy
 ACCOUNTS	Facebook Business účty
-
+<img width="851" height="556" alt="image" src="https://github.com/user-attachments/assets/ea8b2220-6867-49a8-ac41-f0206b4648ee" />
 
 2.3 Kľúčové metriky
 •	IMPRESSIONS – počet zobrazení reklamy
@@ -70,7 +71,9 @@ SELECT COUNT(*) FROM AD_DATA_FUSION.FACEBOOK_ADS.ADS_INSIGHTS;
 SELECT *
 FROM AD_DATA_FUSION.FACEBOOK_ADS.ADS_INSIGHTS
 LIMIT 5;
+```
 5.3 Načítanie dát do staging tabuľky
+```sql
 CREATE OR REPLACE TABLE RAW.STG_FB_ADS_INSIGHTS AS
 SELECT
 CAST(DATE_START AS DATE) AS ad_date,
@@ -99,7 +102,7 @@ DATE_START IS NOT NULL
 AND IMPRESSIONS > 0
 AND ACCOUNT_ID IS NOT NULL;
 ```
-5.2 Validácia dát
+5.4 Validácia dát
 •	kontrola počtu záznamov
 •	kontrola rozsahu dát
 •	základná dátová kvalita
@@ -108,7 +111,7 @@ SELECT COUNT(*) AS total_records FROM RAW.STG_FB_ADS_INSIGHTS;
 SELECT MIN(ad_date) AS earliest, MAX(ad_date) AS latest FROM RAW.STG_FB_ADS_INSIGHTS;
 ```
 
-7. TRANSFORM vrstva
+6. TRANSFORM vrstva
 Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.
 6.1 Oprava duplikátov
 ```sql
@@ -119,7 +122,9 @@ COUNT(*) as dup_count
 FROM RAW.STG_FB_ADS_INSIGHTS
 GROUP BY ad_date, AD_ID
 HAVING COUNT(*) > 1;
+```
 6.2 Deduplikácia
+```sql
 CREATE OR REPLACE TABLE RAW.STG_FB_ADS_DEDUPLICATED AS
 SELECT
 ad_date,
@@ -165,10 +170,10 @@ FROM RAW.STG_FB_ADS_DEDUPLICATED
 WHERE CPC > 100 OR CPM > 50 OR CPC < 0.001
 ORDER BY CPC DESC;
 ```
-9. Dimenzionálny model – Star Schema
+7. Dimenzionálny model – Star Schema
 7.1 Návrh Star Schema
 Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.
-
+<img width="945" height="653" alt="image" src="https://github.com/user-attachments/assets/d8d3de86-2a3a-4afc-abd3-0a292975d475" />
 
 7.2 Dimenzie
 •	DIM_ACCOUNT – reklamné účty
