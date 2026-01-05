@@ -56,12 +56,15 @@ Projekt je postavený na princípe ELT, kde:
 
 5. RAW vrstva (Extract & Load)
 5.1 Nastavenie prostredia
+```sql
 USE ROLE TRAINING_ROLE;
 USE WAREHOUSE LYNX_WH;
 USE DATABASE LR_PROJECT_DB;
 CREATE SCHEMA IF NOT EXISTS RAW;
 CREATE SCHEMA IF NOT EXISTS ANALYTICS;
+```
 5.2 Overenie dostupnosti a štruktúry dát
+```sql
 SHOW DATABASES;
 SELECT COUNT(*) FROM AD_DATA_FUSION.FACEBOOK_ADS.ADS_INSIGHTS;
 SELECT *
@@ -95,16 +98,20 @@ WHERE
 DATE_START IS NOT NULL
 AND IMPRESSIONS > 0
 AND ACCOUNT_ID IS NOT NULL;
+```
 5.2 Validácia dát
 •	kontrola počtu záznamov
 •	kontrola rozsahu dát
 •	základná dátová kvalita
+```sql
 SELECT COUNT(*) AS total_records FROM RAW.STG_FB_ADS_INSIGHTS;
 SELECT MIN(ad_date) AS earliest, MAX(ad_date) AS latest FROM RAW.STG_FB_ADS_INSIGHTS;
+```
 
-6. TRANSFORM vrstva
+7. TRANSFORM vrstva
 Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.
 6.1 Oprava duplikátov
+```sql
 SELECT
 ad_date,
 AD_ID,
@@ -139,10 +146,14 @@ FROM RAW.STG_FB_ADS_INSIGHTS
 GROUP BY
 ad_date, ACCOUNT_ID, ACCOUNT_NAME, CAMPAIGN_ID, CAMPAIGN_NAME,
 ADSET_ID, ADSET_NAME, AD_ID, AD_NAME, OBJECTIVE, platform;
+```
 6.3 Validácia deduplikácie
+```sql
 SELECT COUNT(*) FROM RAW.STG_FB_ADS_DEDUPLICATED;
+```
 6.4 Detekcia anomálií
 Identifikované extrémne hodnoty CPC a CPM, ktoré môžu signalizovať chyby alebo neštandardné správanie kampaní.
+```sql
 SELECT
 ad_date,
 CAMPAIGN_NAME,
@@ -153,7 +164,8 @@ IMPRESSIONS
 FROM RAW.STG_FB_ADS_DEDUPLICATED
 WHERE CPC > 100 OR CPM > 50 OR CPC < 0.001
 ORDER BY CPC DESC;
-7. Dimenzionálny model – Star Schema
+```
+9. Dimenzionálny model – Star Schema
 7.1 Návrh Star Schema
 Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.
 
@@ -164,6 +176,7 @@ Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.
 •	DIM_ADSET – skupiny reklám
 •	DIM_AD – jednotlivé reklamy
 •	DIM_DATE – časová dimenzia
+```sql
 CREATE OR REPLACE TABLE ANALYTICS.DIM_ACCOUNT AS SELECT DISTINCT
 ACCOUNT_ID,
 ACCOUNT_NAME,
@@ -222,6 +235,8 @@ TO_CHAR(date, 'MMMM') AS month_name
 FROM date_range
 WHERE date BETWEEN DATE('2020-01-01') AND DATE('2024-12-31')
 ORDER BY date;
+```
+
 
 7.3 Faktová tabuľka
 FACT_AD_DAILY obsahuje denné metriky a pokročilé výpočty pomocou window functions.
@@ -230,6 +245,7 @@ Použité window functions:
 •	RANK – poradie reklám
 •	SUM OVER – kumulatívne výdavky
 •	AVG OVER – 7-dňový priemer
+```sql
 CREATE OR REPLACE TABLE ANALYTICS.FACT_AD_DAILY AS
 WITH enriched AS (
 SELECT
@@ -255,9 +271,7 @@ ROUND(AVG(s.CTR) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date ROWS BETWEEN 6 PR
 FROM RAW.STG_FB_ADS_DEDUPLICATED s
 )
 SELECT * FROM enriched;
-<img width="985" height="695" alt="image" src="https://github.com/user-attachments/assets/f118aacd-5bb1-4a6f-8797-eab0b8066b1f" />
-
-
+```
 
 8. Vizualizácie a analytické výstupy
 Projekt obsahuje viacero analytických pohľadov pripravených na vizualizáciu.
@@ -268,63 +282,59 @@ Každá vizualizácia obsahuje:
 
 VIZ #1 – Trend CPC v čase
 
-<img width="748" height="292" alt="image" src="https://github.com/user-attachments/assets/65949776-1b24-4d94-8b21-980feb09765b" />
+
 <img width="945" height="453" alt="image" src="https://github.com/user-attachments/assets/2946c049-e269-411d-a03f-66edc7ec3c4e" />
-<br>
+
 
 VIZ #2 – Top kampane podľa spendu
 
-<img width="639" height="343" alt="image" src="https://github.com/user-attachments/assets/3535a128-8e7e-4307-9927-e67e041671ed" />
+
 <img width="945" height="551" alt="image" src="https://github.com/user-attachments/assets/22d34b27-2e42-4fef-bb47-5330854929a7" />
 
 
 VIZ #3: Efektívnosť kampaní (Spend vs. Reach) - SCATTER PLOT
 
-<img width="748" height="336" alt="image" src="https://github.com/user-attachments/assets/aa4602ac-0578-482d-a5a1-8819126fc60e" />
+
 <img width="945" height="539" alt="image" src="https://github.com/user-attachments/assets/4091b758-7053-4e77-8d88-8413a78d0f71" />
 
 
 VIZ #4: CTR podľa cieľov kampánie - BAR CHART
 
-<img width="683" height="352" alt="image" src="https://github.com/user-attachments/assets/7a2a95a8-63eb-4d46-84ad-6d84383223f9" />
 <img width="945" height="550" alt="image" src="https://github.com/user-attachments/assets/a9496d71-3da4-4119-9370-9009d7b175cc" />
  
 
 
 VIZ #5: Top annonce podľa ROI (Spend vs. Engagement) – TABLE
 
-<img width="736" height="488" alt="image" src="https://github.com/user-attachments/assets/eea4869e-1209-4cc6-b1e5-d859bc09d1f5" />
+
 <img width="945" height="557" alt="image" src="https://github.com/user-attachments/assets/e8c52809-4eac-46db-93af-65025fdfff28" />
 
 
 VIZ #6: Sezónnosť - Výdavky podľa dňa týždňa – HEATMAP
 
-<img width="533" height="473" alt="image" src="https://github.com/user-attachments/assets/41020e1a-d8d2-439c-a85a-471cf00eafb9" />
 <img width="945" height="524" alt="image" src="https://github.com/user-attachments/assets/5da17558-71d6-4ddb-8bf1-e7223763a934" />
 
  
 VIZ #7: Kumulatívne výdavky podľa kampánie (WINDOW FUNCTION) - AREA CHART
 
-<img width="909" height="295" alt="image" src="https://github.com/user-attachments/assets/94373c2f-25d5-4266-b404-d6cf8dcce61a" />
+
 <img width="945" height="433" alt="image" src="https://github.com/user-attachments/assets/d97bf3ff-a1b6-45ce-a10b-dc091ac6ae5b" />
 
 
 VIZ #8: Porovnanie CPC v čase s LAG window function - LINE CHART
 
-<img width="722" height="373" alt="image" src="https://github.com/user-attachments/assets/fffc2297-56df-4e94-add2-bf021a7ac7b9" />
+
 <img width="945" height="456" alt="image" src="https://github.com/user-attachments/assets/b6280688-018d-49b9-9467-221ec1fc8386" />
 
 
 VIZ #9: Ranking annoncí v 7-dňovom okne (RANK window function) - DETAILED TABLE
 
-<img width="587" height="390" alt="image" src="https://github.com/user-attachments/assets/d559c289-21fb-4379-8269-475f4d9f812b" />
 <img width="945" height="430" alt="image" src="https://github.com/user-attachments/assets/34eb0dee-1321-47be-ba22-fe55d1d74c05" />
 <img width="945" height="441" alt="image" src="https://github.com/user-attachments/assets/bf271d7b-0be8-4cc5-8778-55b5c02fda37" />
 
 
 VIZ #10: Performance Dashboard - Overview Metrics - KPI CARD
 
-<img width="754" height="453" alt="image" src="https://github.com/user-attachments/assets/77a74d4b-ae8a-44f9-a7cb-333ae013fd2c" />
 <img width="945" height="187" alt="image" src="https://github.com/user-attachments/assets/301dd7bd-21a1-49a3-b92d-7bfb84a5550b" />
 
 9. Performance Dashboard
