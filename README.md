@@ -39,7 +39,7 @@ ACCOUNTS	Facebook Business účty
 •	CTR – Click Through Rate<br>
 •	CPC – Cost Per Click<br>
 •	CPM – Cost Per Mille<br>
-Tieto metriky predstavujú základ pre hodnotenie efektívnosti marketingových kampaní.<br>
+Tieto metriky predstavujú základ pre hodnotenie efektívnosti marketingových kampaní.
 
 3. Ciele analýzy<br>
 Hlavné analytické ciele projektu:<br>
@@ -47,7 +47,7 @@ Hlavné analytické ciele projektu:<br>
     2.	Porovnať nákladovosť kampaní (CPC, CPM)<br>
     3.	Analyzovať trendy výkonnosti v čase<br>
     4.	Detegovať sezónne vzory a anomálie<br>
-    5.	Pripraviť dáta pre dashboardy a reporting<br>
+    5.	Pripraviť dáta pre dashboardy a reporting
 
 4. ELT architektúra<br>
 Projekt je postavený na princípe ELT, kde:<br>
@@ -112,7 +112,7 @@ SELECT MIN(ad_date) AS earliest, MAX(ad_date) AS latest FROM RAW.STG_FB_ADS_INSI
 ```
 
 6. TRANSFORM vrstva<br>
-Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.<br>
+Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.
 6.1 Oprava duplikátov
 ```sql
 SELECT
