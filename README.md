@@ -175,12 +175,13 @@ ORDER BY CPC DESC;
 Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.
 <img width="945" height="653" alt="image" src="https://github.com/user-attachments/assets/d8d3de86-2a3a-4afc-abd3-0a292975d475" />
 
-7.2 Dimenzie
-•	DIM_ACCOUNT – reklamné účty
-•	DIM_CAMPAIGN – kampane (SCD-ready)
-•	DIM_ADSET – skupiny reklám
-•	DIM_AD – jednotlivé reklamy
-•	DIM_DATE – časová dimenzia
+7.2 Dimenzie<br>
+•	DIM_ACCOUNT – reklamné účty (SCD Type 1 - bez histórie)<br>
+•	DIM_CAMPAIGN – kampane (SCD Type 2 - s históriou)<br>
+•	DIM_ADSET – skupiny reklám (SCD Type 1)<br>
+•	DIM_AD – jednotlivé reklamy (SCD Type 2)<br>
+•	DIM_DATE – časová dimenzia<br>
+
 ```sql
 CREATE OR REPLACE TABLE ANALYTICS.DIM_ACCOUNT AS SELECT DISTINCT
 ACCOUNT_ID,
