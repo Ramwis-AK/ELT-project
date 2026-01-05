@@ -281,60 +281,224 @@ Každá vizualizácia obsahuje:
 •	business interpretáciu
 
 VIZ #1 – Trend CPC v čase
-
-
+```sql
+SELECT
+    CONCAT(d.year, '-', LPAD(d.month, 2, '0')) AS year_month, d.month_name,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(MIN(f.CPC), 4) AS min_cpc,
+    ROUND(MAX(f.CPC), 4) AS max_cpc,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(SUM(f.SPEND), 2) AS monthly_spend,
+    COUNT(DISTINCT f.AD_ID) AS unique_ads
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+GROUP BY d.year, d.month, d.month_name
+ORDER BY d.year, d.month;
+```
 <img width="945" height="453" alt="image" src="https://github.com/user-attachments/assets/2946c049-e269-411d-a03f-66edc7ec3c4e" />
 
 
 VIZ #2 – Top kampane podľa spendu
-
-
+```sql
+SELECT TOP 10
+    c.CAMPAIGN_NAME,
+    c.OBJECTIVE,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr_percent,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 4) AS avg_cpm,
+    COUNT(DISTINCT f.ad_date) AS days_active,
+    COUNT(DISTINCT f.AD_ID) AS num_ads
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.campaign_id
+GROUP BY c.campaign_id, c.campaign_name, c.objective
+ORDER BY total_spend DESC;
+```
 <img width="945" height="551" alt="image" src="https://github.com/user-attachments/assets/22d34b27-2e42-4fef-bb47-5330854929a7" />
 
 
 VIZ #3: Efektívnosť kampaní (Spend vs. Reach) - SCATTER PLOT
-
-
+```sql
+SELECT
+    c.CAMPAIGN_NAME,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    SUM(f.REACH) AS total_reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    SUM(f.CLICKS) AS total_clicks,
+    COUNT(DISTINCT f.AD_ID) AS num_ads,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.REACH), 0), 4) AS spend_per_reach,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.CLICKS), 0), 4) AS spend_per_click,
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.campaign_id = c.campaign_id
+GROUP BY c.campaign_id, c.CAMPAIGN_NAME
+HAVING SUM(f.IMPRESSIONS) > 50
+ORDER BY total_spend DESC;
+```
 <img width="945" height="539" alt="image" src="https://github.com/user-attachments/assets/4091b758-7053-4e77-8d88-8413a78d0f71" />
 
 
 VIZ #4: CTR podľa cieľov kampánie - BAR CHART
-
+```sql
+SELECT
+    c.OBJECTIVE,
+    COUNT(DISTINCT f.AD_ID) AS num_ads,
+        ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(MIN(f.CTR), 4) AS min_ctr,
+    ROUND(MAX(f.CTR), 4) AS max_ctr,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+WHERE c.objective IS NOT NULL
+GROUP BY c.objective
+ORDER BY avg_ctr DESC;
+```
 <img width="945" height="550" alt="image" src="https://github.com/user-attachments/assets/a9496d71-3da4-4119-9370-9009d7b175cc" />
- 
 
 
 VIZ #5: Top annonce podľa ROI (Spend vs. Engagement) – TABLE
-
-
+```sql
+SELECT TOP 15
+    a.AD_NAME,
+    s.ADSET_NAME,
+    c.CAMPAIGN_NAME,
+    COUNT(DISTINCT f.ad_date) AS days_active,
+    ROUND(SUM(f.SPEND), 2) AS impressions,
+    SUM(f.IMPRESSIONS) AS impressions,
+    SUM(f.CLICKS) AS clicks,
+    SUM(f.REACH) AS reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 2) AS avg_cpm,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.CLICKS), 0), 4) AS cost_per_click,
+    RANK() OVER (ORDER BY AVG(f.CPC) ASC) AS efficiency_rank
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_AD a ON f.AD_ID = a.AD_ID
+JOIN ANALYTICS.DIM_ADSET s ON a.ADSET_ID = s.ADSET_ID
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+GROUP BY a.AD_ID, a.AD_NAME, s.ADSET_NAME, c.CAMPAIGN_NAME
+HAVING SUM(f.IMPRESSIONS) > 100
+ORDER BY avg_cpc ASC;
+```
 <img width="945" height="557" alt="image" src="https://github.com/user-attachments/assets/e8c52809-4eac-46db-93af-65025fdfff28" />
 
 
 VIZ #6: Sezónnosť - Výdavky podľa dňa týždňa – HEATMAP
-
+```sql
+SELECT
+    d.day_of_week,
+    CASE
+        WHEN d.day_of_week = 1 THEN 'Pondelok'
+        WHEN d.day_of_week = 2 THEN 'Utorok'
+        WHEN d.day_of_week = 3 THEN 'Streda'
+        WHEN d.day_of_week = 4 THEN 'Štvrtok'
+        WHEN d.day_of_week = 5 THEN 'Piatok'
+        WHEN d.day_of_week = 6 THEN 'Sobota'
+        WHEN d.day_of_week = 7 THEN 'Nedeľa'
+    END AS day_name,
+    COUNT(*) AS num_days,
+    ROUND(AVG(f.SPEND), 2) AS avg_daily_spend,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    SUM(f.CLICKS) AS total_clicks,
+    SUM(f.IMPRESSIONS) AS total_impressions
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+GROUP BY d.day_of_week
+ORDER BY d.day_of_week;
+```
 <img width="945" height="524" alt="image" src="https://github.com/user-attachments/assets/5da17558-71d6-4ddb-8bf1-e7223763a934" />
 
  
 VIZ #7: Kumulatívne výdavky podľa kampánie (WINDOW FUNCTION) - AREA CHART
-
-
+```sql
+SELECT
+    d.date,
+    d.month_name,
+    c.CAMPAIGN_NAME,
+    SUM(f.SPEND) AS daily_spend,
+    SUM(SUM(f.SPEND)) OVER (PARTITION BY c.CAMPAIGN_ID ORDER BY d.date) AS cumulative_spend,
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+GROUP BY d.date, d.month_name, c.CAMPAIGN_ID, c.CAMPAIGN_NAME
+ORDER BY c.CAMPAIGN_ID, d.date;
+DESC TABLE ANALYTICS.FACT_AD_DAILY;
+```
 <img width="945" height="433" alt="image" src="https://github.com/user-attachments/assets/d97bf3ff-a1b6-45ce-a10b-dc091ac6ae5b" />
 
 
 VIZ #8: Porovnanie CPC v čase s LAG window function - LINE CHART
-
-
+```sql
+SELECT
+    f.ad_date,
+    f.AD_ID,
+    ROUND(f.CPC, 4) AS cpc_today,
+    ROUND(f.cpc_prev_day, 4) AS cpc_yesterday,
+    CASE
+        WHEN f.cpc_prev_day IS NOT NULL THEN 0
+        ELSE ROUND(((f.CPC - f.cpc_prev_day) / f.cpc_prev_day) *100, 2)
+    END AS percent_change,
+    f.IMPRESSIONS,
+    f.CLICKS,
+    ROUND(f.SPEND, 2) AS spend
+FROM ANALYTICS.FACT_AD_DAILY f
+WHERE f.cpc_prev_day IS NOT NULL
+ORDER BY f.ad_id, f.ad_date
+LIMIT 50;
+```
 <img width="945" height="456" alt="image" src="https://github.com/user-attachments/assets/b6280688-018d-49b9-9467-221ec1fc8386" />
 
 
 VIZ #9: Ranking annoncí v 7-dňovom okne (RANK window function) - DETAILED TABLE
-
+```sql
+SELECT
+    f.AD_ID,
+    f.ad_date,
+    EXTRACT(WEEK FROM f.ad_date) AS week_number,
+    ROUND(f.CPC, 4) AS cpc,
+    f.rank_7d_window AS rank_in_7day_window,
+    f.CLICKS,
+    f.IMPRESSIONS,
+    CASE
+        WHEN f.rank_7d_window = 1 THEN 'Best Performer'
+        WHEN f.rank_7d_window <= 3 THEN 'TOP 3'
+        WHEN f.rank_7d_window <= 5 THEN 'GOOD'
+        ELSE 'Needs Optimization'
+    END AS performance_tier
+FROM ANALYTICS.FACT_AD_DAILY f
+ORDER BY f.ad_id, f.ad_date, f.rank_7d_window
+LIMIT 100;
+```
 <img width="945" height="430" alt="image" src="https://github.com/user-attachments/assets/34eb0dee-1321-47be-ba22-fe55d1d74c05" />
 <img width="945" height="441" alt="image" src="https://github.com/user-attachments/assets/bf271d7b-0be8-4cc5-8778-55b5c02fda37" />
 
 
 VIZ #10: Performance Dashboard - Overview Metrics - KPI CARD
-
+```sql
+SELECT
+    COUNT(DISTINCT f.fact_id) AS total_ad_days,
+    COUNT(DISTINCT f.CAMPAIGN_ID) AS num_campaigns,
+    COUNT(DISTINCT f.AD_ID) AS num_unique_ads,
+    COUNT(DISTINCT f.ad_date) AS days_with_data,
+    ROUND(SUM(f.SPEND), 2) AS total_spend_usd,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    SUM(f.REACH) AS total_reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr_percent,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 2) AS avg_cpm,
+    ROUND(AVG(f.FREQUENCY), 2) AS avg_frequency,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.REACH), 0), 4) AS spend_per_person,
+    MIN(f.ad_date) AS campaign_start,
+    MAX(f.ad_date) AS campaign_end,
+    DATEDIFF(DAY, MIN(f.ad_date), MAX(f.ad_date)) + 1 AS campaign_duration_days
+FROM ANALYTICS.FACT_AD_DAILY f;
+```
 <img width="945" height="187" alt="image" src="https://github.com/user-attachments/assets/301dd7bd-21a1-49a3-b92d-7bfb84a5550b" />
 
 9. Performance Dashboard
