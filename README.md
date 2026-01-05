@@ -270,7 +270,7 @@ VIZ #1 – Trend CPC v čase
 
 <img width="748" height="292" alt="image" src="https://github.com/user-attachments/assets/65949776-1b24-4d94-8b21-980feb09765b" />
 <img width="945" height="453" alt="image" src="https://github.com/user-attachments/assets/2946c049-e269-411d-a03f-66edc7ec3c4e" />
-
+<br>
 
 VIZ #2 – Top kampane podľa spendu
 
