@@ -5,18 +5,18 @@ Projekt simuluje reálny dátovo-inžiniersky a analytický workflow používan�
 
 1. Úvod a zdôvodnenie výberu datasetu
 Rozhodli sme sa pre tento dataset, pretože sa obaja pohybujeme vo svete digitálneho marketingu a práca s dátami z reklamných platforiem je pre nás prirodzená a prakticky využiteľná.
-Dataset z Facebook Ads považujeme za adekvátny najmä z týchto dôvodov:
-•	Biznis relevancia – Facebook Ads patria medzi najpoužívanejšie reklamné platformy. Dáta umožňujú analyzovať výkonnosť kampaní, efektívnosť rozpočtov a správanie publika.
-•	Reálna komplexnosť dát – dáta obsahujú viacero úrovní (account, campaign, adset, ad), časový rozmer a kombináciu numerických aj kategorizovaných metrík.
-•	Vhodnosť pre dimenzionálne modelovanie – štruktúra dát je ideálna pre návrh Star Schema modelu.
-•	Prenositeľnosť metodiky – rovnaký prístup je možné aplikovať aj na iné reklamné platformy (Google Ads, TikTok Ads, LinkedIn Ads).
-•	Dostupnosť dát – dataset je verejne dostupný prostredníctvom Snowflake Marketplace, čo umožňuje reprodukovateľnosť riešenia.
+Dataset z Facebook Ads považujeme za adekvátny najmä z týchto dôvodov:<br>
+•	Biznis relevancia – Facebook Ads patria medzi najpoužívanejšie reklamné platformy. Dáta umožňujú analyzovať výkonnosť kampaní, efektívnosť rozpočtov a správanie publika.<br>
+•	Reálna komplexnosť dát – dáta obsahujú viacero úrovní (account, campaign, adset, ad), časový rozmer a kombináciu numerických aj kategorizovaných metrík.<br>
+•	Vhodnosť pre dimenzionálne modelovanie – štruktúra dát je ideálna pre návrh Star Schema modelu.<br>
+•	Prenositeľnosť metodiky – rovnaký prístup je možné aplikovať aj na iné reklamné platformy (Google Ads, TikTok Ads, LinkedIn Ads).<br>
+•	Dostupnosť dát – dataset je verejne dostupný prostredníctvom Snowflake Marketplace, čo umožňuje reprodukovateľnosť riešenia.<br>
 
 2. Zdrojové dáta
-2.1 Zdroj datasetu
-•	Platforma: Snowflake Marketplace
-•	Dataset: AD_DATA_FUSION.FACEBOOK_ADS
-•	Primárna tabuľka: ADS_INSIGHTS
+2.1 Zdroj datasetu<br>
+•	Platforma: Snowflake Marketplace<br>
+•	Dataset: AD_DATA_FUSION.FACEBOOK_ADS<br>
+•	Primárna tabuľka: ADS_INSIGHTS<br>
 <img width="849" height="665" alt="image" src="https://github.com/user-attachments/assets/757b8217-1032-4a2a-8f71-c7dc81f82e18" />
 <img width="891" height="326" alt="image" src="https://github.com/user-attachments/assets/de3dda1b-33ba-4906-af4b-eb883d20a0e9" />
 
@@ -30,30 +30,30 @@ ADS	Jednotlivé reklamné kreatívy
 ACCOUNTS	Facebook Business účty
 <img width="851" height="556" alt="image" src="https://github.com/user-attachments/assets/ea8b2220-6867-49a8-ac41-f0206b4648ee" />
 
-2.3 Kľúčové metriky
-•	IMPRESSIONS – počet zobrazení reklamy
-•	CLICKS – počet kliknutí
-•	SPEND – výdavky na reklamu (USD)
-•	REACH – počet unikátnych používateľov
-•	FREQUENCY – priemerný počet zobrazení na používateľa
-•	CTR – Click Through Rate
-•	CPC – Cost Per Click
-•	CPM – Cost Per Mille
-Tieto metriky predstavujú základ pre hodnotenie efektívnosti marketingových kampaní.
+2.3 Kľúčové metriky<br>
+•	IMPRESSIONS – počet zobrazení reklamy<br>
+•	CLICKS – počet kliknutí<br>
+•	SPEND – výdavky na reklamu (USD)<br>
+•	REACH – počet unikátnych používateľov<br>
+•	FREQUENCY – priemerný počet zobrazení na používateľa<br>
+•	CTR – Click Through Rate<br>
+•	CPC – Cost Per Click<br>
+•	CPM – Cost Per Mille<br>
+Tieto metriky predstavujú základ pre hodnotenie efektívnosti marketingových kampaní.<br>
 
-3. Ciele analýzy
-Hlavné analytické ciele projektu:
-1.	Identifikovať najefektívnejšie kampane a reklamy
-2.	Porovnať nákladovosť kampaní (CPC, CPM)
-3.	Analyzovať trendy výkonnosti v čase
-4.	Detegovať sezónne vzory a anomálie
-5.	Pripraviť dáta pre dashboardy a reporting
+3. Ciele analýzy<br>
+Hlavné analytické ciele projektu:<br>
+1.	Identifikovať najefektívnejšie kampane a reklamy<br>
+2.	Porovnať nákladovosť kampaní (CPC, CPM)<br>
+3.	Analyzovať trendy výkonnosti v čase<br>
+4.	Detegovať sezónne vzory a anomálie<br>
+5.	Pripraviť dáta pre dashboardy a reporting<br>
 
-4. ELT architektúra
-Projekt je postavený na princípe ELT, kde:
-•	Extract & Load prebieha priamo zo Snowflake Marketplace do RAW vrstvy
-•	Transformácie sú realizované v Snowflake pomocou SQL
-•	Analytická vrstva je postavená na dimenzionálnom modeli
+4. ELT architektúra<br>
+Projekt je postavený na princípe ELT, kde:<br>
+•	Extract & Load prebieha priamo zo Snowflake Marketplace do RAW vrstvy<br>
+•	Transformácie sú realizované v Snowflake pomocou SQL<br>
+•	Analytická vrstva je postavená na dimenzionálnom modeli<br>
 
 5. RAW vrstva (Extract & Load)
 5.1 Nastavenie prostredia
@@ -102,17 +102,17 @@ DATE_START IS NOT NULL
 AND IMPRESSIONS > 0
 AND ACCOUNT_ID IS NOT NULL;
 ```
-5.4 Validácia dát
-•	kontrola počtu záznamov
-•	kontrola rozsahu dát
-•	základná dátová kvalita
+5.4 Validácia dát<br>
+•	kontrola počtu záznamov<br>
+•	kontrola rozsahu dát<br>
+•	základná dátová kvalita<br>
 ```sql
 SELECT COUNT(*) AS total_records FROM RAW.STG_FB_ADS_INSIGHTS;
 SELECT MIN(ad_date) AS earliest, MAX(ad_date) AS latest FROM RAW.STG_FB_ADS_INSIGHTS;
 ```
 
-6. TRANSFORM vrstva
-Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.
+6. TRANSFORM vrstva<br>
+Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.<br>
 6.1 Oprava duplikátov
 ```sql
 SELECT
@@ -156,8 +156,8 @@ ADSET_ID, ADSET_NAME, AD_ID, AD_NAME, OBJECTIVE, platform;
 ```sql
 SELECT COUNT(*) FROM RAW.STG_FB_ADS_DEDUPLICATED;
 ```
-6.4 Detekcia anomálií
-Identifikované extrémne hodnoty CPC a CPM, ktoré môžu signalizovať chyby alebo neštandardné správanie kampaní.
+6.4 Detekcia anomálií<br>
+Identifikované extrémne hodnoty CPC a CPM, ktoré môžu signalizovať chyby alebo neštandardné správanie kampaní.<br>
 ```sql
 SELECT
 ad_date,
@@ -171,8 +171,8 @@ WHERE CPC > 100 OR CPM > 50 OR CPC < 0.001
 ORDER BY CPC DESC;
 ```
 7. Dimenzionálny model – Star Schema
-7.1 Návrh Star Schema
-Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.
+7.1 Návrh Star Schema<br>
+Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.<br>
 <img width="945" height="653" alt="image" src="https://github.com/user-attachments/assets/d8d3de86-2a3a-4afc-abd3-0a292975d475" />
 
 7.2 Dimenzie<br>
@@ -244,13 +244,13 @@ ORDER BY date;
 ```
 
 
-7.3 Faktová tabuľka
-FACT_AD_DAILY obsahuje denné metriky a pokročilé výpočty pomocou window functions.
-Použité window functions:
-•	LAG – zmena CPC deň po dni
-•	RANK – poradie reklám
-•	SUM OVER – kumulatívne výdavky
-•	AVG OVER – 7-dňový priemer
+7.3 Faktová tabuľka<br>
+FACT_AD_DAILY obsahuje denné metriky a pokročilé výpočty pomocou window functions.<br>
+Použité window functions:<br>
+•	LAG – zmena CPC deň po dni<br>
+•	RANK – poradie reklám<br>
+•	SUM OVER – kumulatívne výdavky<br>
+•	AVG OVER – 7-dňový priemer<br>
 ```sql
 CREATE OR REPLACE TABLE ANALYTICS.FACT_AD_DAILY AS
 WITH enriched AS (
@@ -279,12 +279,12 @@ FROM RAW.STG_FB_ADS_DEDUPLICATED s
 SELECT * FROM enriched;
 ```
 
-8. Vizualizácie a analytické výstupy
-Projekt obsahuje viacero analytických pohľadov pripravených na vizualizáciu.
-Každá vizualizácia obsahuje:
-•	SQL dotaz
-•	popis
-•	business interpretáciu
+8. Vizualizácie a analytické výstupy<br>
+Projekt obsahuje viacero analytických pohľadov pripravených na vizualizáciu.<br>
+Každá vizualizácia obsahuje:<br>
+•	SQL dotaz<br>
+•	popis<br>
+•	business interpretáciu<br>
 
 VIZ #1 – Trend CPC v čase
 ```sql
@@ -507,37 +507,37 @@ FROM ANALYTICS.FACT_AD_DAILY f;
 ```
 <img width="945" height="187" alt="image" src="https://github.com/user-attachments/assets/301dd7bd-21a1-49a3-b92d-7bfb84a5550b" />
 
-9. Performance Dashboard
-Dashboard poskytuje high-level prehľad pre manažment:
-•	celkové výdavky
-•	impressions, clicks, reach
-•	priemerné CPC, CTR, CPM
-•	trvanie kampaní
+9. Performance Dashboard<br>
+Dashboard poskytuje high-level prehľad pre manažment:<br>
+•	celkové výdavky<br>
+•	impressions, clicks, reach<br>
+•	priemerné CPC, CTR, CPM<br>
+•	trvanie kampaní<br>
 
-10. Kľúčové insights
-•	Star Schema výrazne zjednodušuje analytické dotazy
-•	Window functions umožňujú pokročilé analýzy bez externých nástrojov
-•	Dáta sú pripravené na multi-platform rozšírenie
+10. Kľúčové insights<br>
+•	Star Schema výrazne zjednodušuje analytické dotazy<br>
+•	Window functions umožňujú pokročilé analýzy bez externých nástrojov<br>
+•	Dáta sú pripravené na multi-platform rozšírenie<br>
 
-11. Technické nástroje
-•	Snowflake
-•	Snowflake Marketplace
-•	SQL
-•	Vizualizačný nástroj (Power BI / Tableau / Looker)
+11. Technické nástroje<br>
+•	Snowflake<br>
+•	Snowflake Marketplace<br>
+•	SQL<br>
+•	Vizualizačný nástroj (Power BI / Tableau / Looker)<br>
 
-12. Možné rozšírenia projektu
-•	Incrementálny load
-•	Alerting na anomálie
-•	Prediktívne modelovanie
-•	Integrácia ďalších reklamných platforiem
+12. Možné rozšírenia projektu<br>
+•	Incrementálny load<br>
+•	Alerting na anomálie<br>
+•	Prediktívne modelovanie<br>
+•	Integrácia ďalších reklamných platforiem<br>
 
-Autori
-•	Alexander Krobot
-•	Filip Samko
-Dátum: Január 2026
-Verzia: 1.0
+Autori<br>
+•	Alexander Krobot<br>
+•	Filip Samko<br>
+Dátum: Január 2026<br>
+Verzia: 1.0<br>
 
-Referencie
-•	Snowflake Documentation
-•	Ralph Kimball – The Data Warehouse Toolkit
-•	Window Functions in SQL
+Referencie<br>
+•	Snowflake Documentation<br>
+•	Ralph Kimball – The Data Warehouse Toolkit<br>
+•	Window Functions in SQL<br>
