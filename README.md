@@ -1,54 +1,497 @@
 ELT proces Facebook Ads Analytics v Snowflake
-Popis projektu
-Tento projekt sa zameriava na návrh a implementáciu komplexného ELT procesu (Extract–Load–Transform) v prostredí Snowflake, vrátane vytvorenia dimenzionálneho dátového modelu typu Star Schema.
-Cieľom je analyzovať výkonnosť Facebook Ads kampaní na základe denných metrík a poskytnúť dátový základ pre analytické a reportingové použitie.
-Projekt simuluje reálny analytický scenár z marketingového prostredia, kde je kladený dôraz na škálovateľnosť riešenia, čistotu dát a znovupoužiteľnosť dátového modelu.
+0. Základný prehľad projektu
+Tento projekt sa zameriava na návrh a implementáciu end-to-end ELT (Extract – Load – Transform) pipeline v cloudovom dátovom sklade Snowflake. Cieľom je spracovať marketingové dáta z platformy Facebook Ads, transformovať ich do dimenzionálneho modelu (Star Schema) a pripraviť ich na analytické a reportingové využitie.
+Projekt simuluje reálny dátovo-inžiniersky a analytický workflow používaný v marketingových a analytických tímoch.
 ________________________________________
-1. Úvod a popis zdrojových dát
-1.1 Tematické zameranie a zdôvodnenie výberu
-Projekt je zameraný na analýzu digitálnych reklamných kampaní Facebook Ads. Výber datasetu bol motivovaný najmä jeho praktickým využitím v biznis prostredí a vysokou relevanciou pre marketingové rozhodovanie.
-Hlavné dôvody výberu:
-•	Biznisová relevancia – umožňuje analyzovať výkonnosť kampaní, optimalizovať rozpočty a porovnávať reklamné stratégie
-•	Praktická aplikovateľnosť – výstupy sú využiteľné pri optimalizácii CPC, CPM, cieľov kampaní a targetingu
-•	Škálovateľnosť riešenia – rovnaký ELT prístup je aplikovateľný aj na iné reklamné platformy (Google Ads, TikTok Ads, LinkedIn Ads)
-•	Dostupnosť dát – dataset je dostupný prostredníctvom Snowflake Marketplace
+1. Úvod a zdôvodnenie výberu datasetu
+Rozhodli sme sa pre tento dataset, pretože sa obaja pohybujeme vo svete digitálneho marketingu a práca s dátami z reklamných platforiem je pre nás prirodzená a prakticky využiteľná.
+Dataset z Facebook Ads považujeme za adekvátny najmä z týchto dôvodov:
+•	Biznis relevancia – Facebook Ads patria medzi najpoužívanejšie reklamné platformy. Dáta umožňujú analyzovať výkonnosť kampaní, efektívnosť rozpočtov a správanie publika.
+•	Reálna komplexnosť dát – dáta obsahujú viacero úrovní (account, campaign, adset, ad), časový rozmer a kombináciu numerických aj kategorizovaných metrík.
+•	Vhodnosť pre dimenzionálne modelovanie – štruktúra dát je ideálna pre návrh Star Schema modelu.
+•	Prenositeľnosť metodiky – rovnaký prístup je možné aplikovať aj na iné reklamné platformy (Google Ads, TikTok Ads, LinkedIn Ads).
+•	Dostupnosť dát – dataset je verejne dostupný prostredníctvom Snowflake Marketplace, čo umožňuje reprodukovateľnosť riešenia.
 ________________________________________
-1.2 Zdrojové dáta a ich štruktúra
-Zdroj dát:
-Snowflake Marketplace – AD_DATA_FUSION.FACEBOOK_ADS
-<img width="891" height="327" alt="image" src="https://github.com/user-attachments/assets/e1f138e5-4b22-413f-a594-c070d3a655a8" />
-<img width="849" height="636" alt="image" src="https://github.com/user-attachments/assets/d9eec184-1d06-4f9a-9526-ed5ac5a3105d" />
+2. Zdrojové dáta
+2.1 Zdroj datasetu
+•	Platforma: Snowflake Marketplace
+•	Dataset: AD_DATA_FUSION.FACEBOOK_ADS
+•	Primárna tabuľka: ADS_INSIGHTS
 
-Dataset obsahuje historické denné dáta o výkonnosti reklám a súvisiace metadata. Základné tabuľky:
+________________________________________
+2.2 Štruktúra zdrojových dát
+Zdrojové dáta obsahujú denné metriky reklamných kampaní a sú normalizované do viacerých entít.
 Tabuľka	Popis
-ADS_INSIGHTS	Denné metriky výkonnosti reklám
-CAMPAIGNS	Informácie o kampaniach a ich cieľoch
-ADSETS	Skupiny reklám s definovaným targetingom
+ADS_INSIGHTS	Denné výkonnostné metriky (impressions, clicks, spend, CTR, CPC, CPM)
+CAMPAIGNS	Metadata o kampaniach
+ADSETS	Skupiny reklám s targetingom
 ADS	Jednotlivé reklamné kreatívy
 ACCOUNTS	Facebook Business účty
-________________________________________
-1.3 Kľúčové metriky
-Hlavné analyzované metriky zahŕňajú:
-•	IMPRESSIONS – počet zobrazení reklamy
-•	CLICKS – počet kliknutí
-•	SPEND – suma vynaložená na reklamu (USD)
-•	REACH – počet unikátnych používateľov
-•	FREQUENCY – priemerný počet zobrazení na používateľa
-•	CTR (Click-Through Rate) – pomer kliknutí k impressions
-•	CPM (Cost per Mille) – cena za 1000 zobrazení
-•	CPC (Cost per Click) – cena za jedno kliknutie
-________________________________________
-1.4 Ciele analýzy
-Hlavnými cieľmi projektu sú:
-1.	Identifikácia najvýkonnejších kampaní, adsetov a reklám
-2.	Analýza nákladovosti kampaní pomocou metrík CPC a CPM
-3.	Sledovanie trendov výkonnosti v čase
-4.	Porovnanie výkonu kampaní podľa ich cieľov
-5.	Vytvorenie dátového modelu vhodného pre reporting a BI nástroje
-________________________________________
-1.5 ERD diagram pôvodnej dátovej štruktúry
-Pôvodná štruktúra datasetu je založená na normalizovanom modeli, kde sú jednotlivé entity (účty, kampane, adsety, reklamy) navzájom prepojené prostredníctvom identifikátorov.
 
 ________________________________________
-2. Návrh dimenzionálneho modelu (Star Schema)
-Na analytické účely bol navrhnutý dimenzionálny model typu Star Schema, ktorý umožňuje efektívne agregácie a jednoduché použitie v BI nástrojoch.
+2.3 Kľúčové metriky
+•	IMPRESSIONS – počet zobrazení reklamy
+•	CLICKS – počet kliknutí
+•	SPEND – výdavky na reklamu (USD)
+•	REACH – počet unikátnych používateľov
+•	FREQUENCY – priemerný počet zobrazení na používateľa
+•	CTR – Click Through Rate
+•	CPC – Cost Per Click
+•	CPM – Cost Per Mille
+Tieto metriky predstavujú základ pre hodnotenie efektívnosti marketingových kampaní.
+________________________________________
+3. Ciele analýzy
+Hlavné analytické ciele projektu:
+1.	Identifikovať najefektívnejšie kampane a reklamy
+2.	Porovnať nákladovosť kampaní (CPC, CPM)
+3.	Analyzovať trendy výkonnosti v čase
+4.	Detegovať sezónne vzory a anomálie
+5.	Pripraviť dáta pre dashboardy a reporting
+________________________________________
+4. ELT architektúra
+Projekt je postavený na princípe ELT, kde:
+•	Extract & Load prebieha priamo zo Snowflake Marketplace do RAW vrstvy
+•	Transformácie sú realizované v Snowflake pomocou SQL
+•	Analytická vrstva je postavená na dimenzionálnom modeli
+________________________________________
+5. RAW vrstva (Extract & Load)________________________________________
+5.1 Nastavenie prostredia
+USE ROLE TRAINING_ROLE;
+USE WAREHOUSE LYNX_WH;
+USE DATABASE LR_PROJECT_DB;
+CREATE SCHEMA IF NOT EXISTS RAW;
+CREATE SCHEMA IF NOT EXISTS ANALYTICS;________________________________________
+5.2 Overenie dostupnosti a štruktúry dát
+SHOW DATABASES;
+SELECT COUNT(*) FROM AD_DATA_FUSION.FACEBOOK_ADS.ADS_INSIGHTS;
+SELECT *
+FROM AD_DATA_FUSION.FACEBOOK_ADS.ADS_INSIGHTS
+LIMIT 5;________________________________________
+5.3 Načítanie dát do staging tabuľky
+CREATE OR REPLACE TABLE RAW.STG_FB_ADS_INSIGHTS AS
+SELECT
+CAST(DATE_START AS DATE) AS ad_date,
+ACCOUNT_ID,
+ACCOUNT_NAME,
+CAMPAIGN_ID,
+CAMPAIGN_NAME,
+ADSET_ID,
+ADSET_NAME,
+AD_ID,
+AD_NAME,
+OBJECTIVE,
+CAST(IMPRESSIONS AS NUMBER(38,0)) AS IMPRESSIONS,
+CAST(CLICKS AS NUMBER(38,0)) AS CLICKS,
+CAST(SPEND AS NUMBER(38,2)) AS SPEND,
+CAST(REACH AS NUMBER(38,0)) AS REACH,
+CAST(FREQUENCY AS FLOAT) AS FREQUENCY,
+CAST(CTR AS FLOAT) AS CTR,
+CAST(CPM AS FLOAT) AS CPM,
+CAST(CPC AS FLOAT) AS CPC,
+'FACEBOOK' AS platform,
+CURRENT_TIMESTAMP() AS load_timestamp
+FROM AD_DATA_FUSION.FACEBOOK_ADS.ADS_INSIGHTS
+WHERE
+DATE_START IS NOT NULL
+AND IMPRESSIONS > 0
+AND ACCOUNT_ID IS NOT NULL;________________________________________
+5.2 Validácia dát
+•	kontrola počtu záznamov
+•	kontrola rozsahu dát
+•	základná dátová kvalita
+SELECT COUNT(*) AS total_records FROM RAW.STG_FB_ADS_INSIGHTS;
+SELECT MIN(ad_date) AS earliest, MAX(ad_date) AS latest FROM RAW.STG_FB_ADS_INSIGHTS;
+________________________________________
+6. TRANSFORM vrstva
+Zdrojové dáta obsahovali duplicitné záznamy na úrovni ad_date + ad_id. Tie boli odstránené agregáciou.________________________________________
+6.1 Oprava duplikátov
+SELECT
+ad_date,
+AD_ID,
+COUNT(*) as dup_count
+FROM RAW.STG_FB_ADS_INSIGHTS
+GROUP BY ad_date, AD_ID
+HAVING COUNT(*) > 1;________________________________________
+6.2 Deduplikácia
+CREATE OR REPLACE TABLE RAW.STG_FB_ADS_DEDUPLICATED AS
+SELECT
+ad_date,
+ACCOUNT_ID,
+ACCOUNT_NAME,
+CAMPAIGN_ID,
+CAMPAIGN_NAME,
+ADSET_ID,
+ADSET_NAME,
+AD_ID,
+AD_NAME,
+OBJECTIVE,
+ROUND(AVG(IMPRESSIONS)) AS IMPRESSIONS,
+ROUND(AVG(CLICKS)) AS CLICKS,
+ROUND(AVG(SPEND), 2) AS SPEND,
+ROUND(AVG(REACH)) AS REACH,
+ROUND(AVG(FREQUENCY), 4) AS FREQUENCY,
+ROUND(AVG(CTR), 4) AS CTR,
+ROUND(AVG(CPM), 2) AS CPM,
+ROUND(AVG(CPC), 4) AS CPC,
+platform,
+MAX(load_timestamp) AS load_timestamp
+FROM RAW.STG_FB_ADS_INSIGHTS
+GROUP BY
+ad_date, ACCOUNT_ID, ACCOUNT_NAME, CAMPAIGN_ID, CAMPAIGN_NAME,
+ADSET_ID, ADSET_NAME, AD_ID, AD_NAME, OBJECTIVE, platform;________________________________________
+6.3 Validácia deduplikácie
+SELECT COUNT(*) FROM RAW.STG_FB_ADS_DEDUPLICATED;________________________________________
+6.4 Detekcia anomálií
+Identifikované extrémne hodnoty CPC a CPM, ktoré môžu signalizovať chyby alebo neštandardné správanie kampaní.
+SELECT
+ad_date,
+CAMPAIGN_NAME,
+CPC,
+CPM,
+SPEND,
+IMPRESSIONS
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+WHERE CPC > 100 OR CPM > 50 OR CPC < 0.001
+ORDER BY CPC DESC;________________________________________
+7. Dimenzionálny model – Star Schema
+7.1 Návrh Star Schema
+Model pozostáva z jednej faktovej tabuľky a viacerých dimenzií.
+
+________________________________________
+7.2 Dimenzie
+•	DIM_ACCOUNT – reklamné účty
+•	DIM_CAMPAIGN – kampane (SCD-ready)
+•	DIM_ADSET – skupiny reklám
+•	DIM_AD – jednotlivé reklamy
+•	DIM_DATE – časová dimenzia
+CREATE OR REPLACE TABLE ANALYTICS.DIM_ACCOUNT AS SELECT DISTINCT
+ACCOUNT_ID,
+ACCOUNT_NAME,
+'USA' AS country,
+CURRENT_DATE AS created_date
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+WHERE ACCOUNT_ID IS NOT NULL;
+
+CREATE OR REPLACE TABLE ANALYTICS.DIM_ADSET AS SELECT DISTINCT
+ADSET_ID,
+ADSET_NAME,
+CAMPAIGN_ID,
+'ACTIVE' AS status,
+CURRENT_DATE AS created_date
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+WHERE ADSET_ID IS NOT NULL;
+
+CREATE OR REPLACE TABLE ANALYTICS.DIM_CAMPAIGN AS SELECT
+CAMPAIGN_ID,
+CAMPAIGN_NAME,
+OBJECTIVE,
+'ACTIVE' AS is_active,
+MIN(ad_date) AS created_date,
+MIN(ad_date) AS valid_form,
+TO_DATE('2099-12-31') as valid_to,
+TRUE AS is_current
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+GROUP BY CAMPAIGN_ID, CAMPAIGN_NAME, OBJECTIVE;
+
+CREATE OR REPLACE TABLE ANALYTICS.DIM_AD AS SELECT
+AD_ID,
+AD_NAME,
+ADSET_ID,
+MIN(ad_date) AS created_date,
+MIN(ad_date) AS valid_form,
+TO_DATE('2099-12-31') as valid_to,
+TRUE AS is_current
+FROM RAW.STG_FB_ADS_DEDUPLICATED
+GROUP BY AD_ID, AD_NAME, ADSET_ID;
+
+CREATE OR REPLACE TABLE ANALYTICS.DIM_DATE AS
+WITH date_range AS (
+SELECT DATEADD(DAY, SEQ4(), DATE('2020-01-01')) AS date
+FROM TABLE(GENERATOR(ROWCOUNT => 2000))
+)
+SELECT
+date,
+YEAR(date) AS year,
+MONTH(date) AS month,
+DAY(date) AS day,
+WEEKOFYEAR(date) AS week,
+QUARTER(date) AS quarter,
+DAYOFWEEK(date) AS day_of_week,
+DAYOFWEEK(date) IN (6, 7) AS is_weekend,
+TO_CHAR(date, 'MMMM') AS month_name
+FROM date_range
+WHERE date BETWEEN DATE('2020-01-01') AND DATE('2024-12-31')
+ORDER BY date;
+________________________________________
+7.3 Faktová tabuľka
+FACT_AD_DAILY obsahuje denné metriky a pokročilé výpočty pomocou window functions.
+Použité window functions:
+•	LAG – zmena CPC deň po dni
+•	RANK – poradie reklám
+•	SUM OVER – kumulatívne výdavky
+•	AVG OVER – 7-dňový priemer
+CREATE OR REPLACE TABLE ANALYTICS.FACT_AD_DAILY AS
+WITH enriched AS (
+SELECT
+ROW_NUMBER() OVER (ORDER BY s.ad_date, s.AD_ID) AS fact_id,
+s.ad_date,
+s.CAMPAIGN_ID,
+s.ADSET_ID,
+s.ACCOUNT_ID,
+s.AD_ID,
+s.IMPRESSIONS,
+s.CLICKS,
+s.SPEND,
+s.REACH,
+s.FREQUENCY,
+s.CTR,
+s.CPM,
+s.CPC,
+LAG(s.CPC, 1) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date) AS cpc_prev_day,
+ROW_NUMBER() OVER (PARTITION BY s.ad_date ORDER BY s.CPC ASC) AS daily_rank_by_cpc_asc,
+RANK() OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date DESC ROWS BETWEEN CURRENT ROW AND 6 FOLLOWING) AS rank_7d_window,
+SUM(s.SPEND) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date) AS cumulative_spend_per_ad,
+ROUND(AVG(s.CTR) OVER (PARTITION BY s.AD_ID ORDER BY s.ad_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 4) AS ctr_7d_avg
+FROM RAW.STG_FB_ADS_DEDUPLICATED s
+)
+SELECT * FROM enriched;
+________________________________________
+8. Vizualizácie a analytické výstupy
+Projekt obsahuje viacero analytických pohľadov pripravených na vizualizáciu.
+Každá vizualizácia obsahuje:
+•	SQL dotaz
+•	popis
+•	business interpretáciu
+________________________________________
+VIZ #1 – Trend CPC v čase
+SELECT
+    CONCAT(d.year, '-', LPAD(d.month, 2, '0')) AS year_month, d.month_name,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(MIN(f.CPC), 4) AS min_cpc,
+    ROUND(MAX(f.CPC), 4) AS max_cpc,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(SUM(f.SPEND), 2) AS monthly_spend,
+    COUNT(DISTINCT f.AD_ID) AS unique_ads
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+GROUP BY d.year, d.month, d.month_name
+ORDER BY d.year, d.month;
+
+ ________________________________________
+VIZ #2 – Top kampane podľa spendu
+SELECT TOP 10
+    c.CAMPAIGN_NAME,
+    c.OBJECTIVE,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr_percent,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 4) AS avg_cpm,
+    COUNT(DISTINCT f.ad_date) AS days_active,
+    COUNT(DISTINCT f.AD_ID) AS num_ads
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.campaign_id
+GROUP BY c.campaign_id, c.campaign_name, c.objective
+ORDER BY total_spend DESC;
+
+ 
+________________________________________
+VIZ #3: Efektívnosť kampaní (Spend vs. Reach) - SCATTER PLOT
+SELECT
+    c.CAMPAIGN_NAME,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    SUM(f.REACH) AS total_reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    SUM(f.CLICKS) AS total_clicks,
+    COUNT(DISTINCT f.AD_ID) AS num_ads,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.REACH), 0), 4) AS spend_per_reach,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.CLICKS), 0), 4) AS spend_per_click,
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.campaign_id = c.campaign_id
+GROUP BY c.campaign_id, c.CAMPAIGN_NAME
+HAVING SUM(f.IMPRESSIONS) > 50
+ORDER BY total_spend DESC;
+
+ ________________________________________
+VIZ #4: CTR podľa cieľov kampánie - BAR CHART
+SELECT
+    c.OBJECTIVE,
+    COUNT(DISTINCT f.AD_ID) AS num_ads,
+        ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(MIN(f.CTR), 4) AS min_ctr,
+    ROUND(MAX(f.CTR), 4) AS max_ctr,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    ROUND(SUM(f.SPEND), 2) AS total_spend,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+WHERE c.objective IS NOT NULL
+GROUP BY c.objective
+ORDER BY avg_ctr DESC;
+
+ 
+________________________________________
+VIZ #5: Top annonce podľa ROI (Spend vs. Engagement) – TABLE
+SELECT TOP 15
+    a.AD_NAME,
+    s.ADSET_NAME,
+    c.CAMPAIGN_NAME,
+    COUNT(DISTINCT f.ad_date) AS days_active,
+    ROUND(SUM(f.SPEND), 2) AS impressions,
+    SUM(f.IMPRESSIONS) AS impressions,
+    SUM(f.CLICKS) AS clicks,
+    SUM(f.REACH) AS reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 2) AS avg_cpm,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.CLICKS), 0), 4) AS cost_per_click,
+    RANK() OVER (ORDER BY AVG(f.CPC) ASC) AS efficiency_rank
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_AD a ON f.AD_ID = a.AD_ID
+JOIN ANALYTICS.DIM_ADSET s ON a.ADSET_ID = s.ADSET_ID
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+GROUP BY a.AD_ID, a.AD_NAME, s.ADSET_NAME, c.CAMPAIGN_NAME
+HAVING SUM(f.IMPRESSIONS) > 100
+ORDER BY avg_cpc ASC;
+
+
+ 
+________________________________________
+VIZ #6: Sezónnosť - Výdavky podľa dňa týždňa – HEATMAP
+SELECT
+    d.day_of_week,
+    CASE
+        WHEN d.day_of_week = 1 THEN 'Pondelok'
+        WHEN d.day_of_week = 2 THEN 'Utorok'
+        WHEN d.day_of_week = 3 THEN 'Streda'
+        WHEN d.day_of_week = 4 THEN 'Štvrtok'
+        WHEN d.day_of_week = 5 THEN 'Piatok'
+        WHEN d.day_of_week = 6 THEN 'Sobota'
+        WHEN d.day_of_week = 7 THEN 'Nedeľa'
+    END AS day_name,
+    COUNT(*) AS num_days,
+    ROUND(AVG(f.SPEND), 2) AS avg_daily_spend,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    SUM(f.CLICKS) AS total_clicks,
+    SUM(f.IMPRESSIONS) AS total_impressions
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+GROUP BY d.day_of_week
+ORDER BY d.day_of_week;
+
+ 
+________________________________________
+VIZ #7: Kumulatívne výdavky podľa kampánie (WINDOW FUNCTION) - AREA CHART
+SELECT
+    d.date,
+    d.month_name,
+    c.CAMPAIGN_NAME,
+    SUM(f.SPEND) AS daily_spend,
+    SUM(SUM(f.SPEND)) OVER (PARTITION BY c.CAMPAIGN_ID ORDER BY d.date) AS cumulative_spend,
+FROM ANALYTICS.FACT_AD_DAILY f
+JOIN ANALYTICS.DIM_DATE d ON f.ad_date = d.date
+JOIN ANALYTICS.DIM_CAMPAIGN c ON f.CAMPAIGN_ID = c.CAMPAIGN_ID
+GROUP BY d.date, d.month_name, c.CAMPAIGN_ID, c.CAMPAIGN_NAME
+ORDER BY c.CAMPAIGN_ID, d.date;
+DESC TABLE ANALYTICS.FACT_AD_DAILY;
+
+
+ 
+________________________________________
+VIZ #8: Porovnanie CPC v čase s LAG window function - LINE CHART
+SELECT
+    f.ad_date,
+    f.AD_ID,
+    ROUND(f.CPC, 4) AS cpc_today,
+    ROUND(f.cpc_prev_day, 4) AS cpc_yesterday,
+    CASE
+        WHEN f.cpc_prev_day IS NOT NULL THEN 0
+        ELSE ROUND(((f.CPC - f.cpc_prev_day) / f.cpc_prev_day) *100, 2)
+    END AS percent_change,
+    f.IMPRESSIONS,
+    f.CLICKS,
+    ROUND(f.SPEND, 2) AS spend
+FROM ANALYTICS.FACT_AD_DAILY f
+WHERE f.cpc_prev_day IS NOT NULL
+ORDER BY f.ad_id, f.ad_date
+LIMIT 50;
+
+ 
+________________________________________
+VIZ #9: Ranking annoncí v 7-dňovom okne (RANK window function) - DETAILED TABLE
+SELECT
+    f.AD_ID,
+    f.ad_date,
+    EXTRACT(WEEK FROM f.ad_date) AS week_number,
+    ROUND(f.CPC, 4) AS cpc,
+    f.rank_7d_window AS rank_in_7day_window,
+    f.CLICKS,
+    f.IMPRESSIONS,
+    CASE
+        WHEN f.rank_7d_window = 1 THEN 'Best Performer'
+        WHEN f.rank_7d_window <= 3 THEN 'TOP 3'
+        WHEN f.rank_7d_window <= 5 THEN 'GOOD'
+        ELSE 'Needs Optimization'
+    END AS performance_tier
+FROM ANALYTICS.FACT_AD_DAILY f
+ORDER BY f.ad_id, f.ad_date, f.rank_7d_window
+LIMIT 100;
+
+ 
+ ________________________________________
+VIZ #10: Performance Dashboard - Overview Metrics - KPI CARD
+SELECT
+    COUNT(DISTINCT f.fact_id) AS total_ad_days,
+    COUNT(DISTINCT f.CAMPAIGN_ID) AS num_campaigns,
+    COUNT(DISTINCT f.AD_ID) AS num_unique_ads,
+    COUNT(DISTINCT f.ad_date) AS days_with_data,
+    ROUND(SUM(f.SPEND), 2) AS total_spend_usd,
+    SUM(f.IMPRESSIONS) AS total_impressions,
+    SUM(f.CLICKS) AS total_clicks,
+    SUM(f.REACH) AS total_reach,
+    ROUND(AVG(f.CTR), 4) AS avg_ctr_percent,
+    ROUND(AVG(f.CPC), 4) AS avg_cpc,
+    ROUND(AVG(f.CPM), 2) AS avg_cpm,
+    ROUND(AVG(f.FREQUENCY), 2) AS avg_frequency,
+    ROUND(SUM(f.SPEND) / NULLIF(SUM(f.REACH), 0), 4) AS spend_per_person,
+    MIN(f.ad_date) AS campaign_start,
+    MAX(f.ad_date) AS campaign_end,
+    DATEDIFF(DAY, MIN(f.ad_date), MAX(f.ad_date)) + 1 AS campaign_duration_days
+FROM ANALYTICS.FACT_AD_DAILY f;
+ ________________________________________9. Performance Dashboard
+Dashboard poskytuje high-level prehľad pre manažment:
+•	celkové výdavky
+•	impressions, clicks, reach
+•	priemerné CPC, CTR, CPM
+•	trvanie kampaní
+________________________________________
+10. Kľúčové insights
+•	Star Schema výrazne zjednodušuje analytické dotazy
+•	Window functions umožňujú pokročilé analýzy bez externých nástrojov
+•	Dáta sú pripravené na multi-platform rozšírenie
+________________________________________
+11. Technické nástroje
+•	Snowflake
+•	Snowflake Marketplace
+•	SQL
+•	Vizualizačný nástroj (Power BI / Tableau / Looker)
+________________________________________
+12. Možné rozšírenia projektu
+•	Incrementálny load
+•	Alerting na anomálie
+•	Prediktívne modelovanie
+•	Integrácia ďalších reklamných platforiem
+________________________________________
+Autori
+•	Alexander Krobot
+•	Filip Samko
+Dátum: Január 2026
+Verzia: 1.0
+________________________________________
+Referencie
+•	Snowflake Documentation
+•	Ralph Kimball – The Data Warehouse Toolkit
+•	Window Functions in SQL
