@@ -267,53 +267,63 @@ Každá vizualizácia obsahuje:
 •	business interpretáciu
 
 VIZ #1 – Trend CPC v čase
+
 <img width="748" height="292" alt="image" src="https://github.com/user-attachments/assets/65949776-1b24-4d94-8b21-980feb09765b" />
 <img width="945" height="453" alt="image" src="https://github.com/user-attachments/assets/2946c049-e269-411d-a03f-66edc7ec3c4e" />
 
 
 VIZ #2 – Top kampane podľa spendu
+
 <img width="639" height="343" alt="image" src="https://github.com/user-attachments/assets/3535a128-8e7e-4307-9927-e67e041671ed" />
 <img width="945" height="551" alt="image" src="https://github.com/user-attachments/assets/22d34b27-2e42-4fef-bb47-5330854929a7" />
 
 
 VIZ #3: Efektívnosť kampaní (Spend vs. Reach) - SCATTER PLOT
+
 <img width="748" height="336" alt="image" src="https://github.com/user-attachments/assets/aa4602ac-0578-482d-a5a1-8819126fc60e" />
 <img width="945" height="539" alt="image" src="https://github.com/user-attachments/assets/4091b758-7053-4e77-8d88-8413a78d0f71" />
 
 
 VIZ #4: CTR podľa cieľov kampánie - BAR CHART
+
 <img width="683" height="352" alt="image" src="https://github.com/user-attachments/assets/7a2a95a8-63eb-4d46-84ad-6d84383223f9" />
 <img width="945" height="550" alt="image" src="https://github.com/user-attachments/assets/a9496d71-3da4-4119-9370-9009d7b175cc" />
  
 
 
 VIZ #5: Top annonce podľa ROI (Spend vs. Engagement) – TABLE
+
 <img width="736" height="488" alt="image" src="https://github.com/user-attachments/assets/eea4869e-1209-4cc6-b1e5-d859bc09d1f5" />
 <img width="945" height="557" alt="image" src="https://github.com/user-attachments/assets/e8c52809-4eac-46db-93af-65025fdfff28" />
 
 
 VIZ #6: Sezónnosť - Výdavky podľa dňa týždňa – HEATMAP
+
 <img width="533" height="473" alt="image" src="https://github.com/user-attachments/assets/41020e1a-d8d2-439c-a85a-471cf00eafb9" />
 <img width="945" height="524" alt="image" src="https://github.com/user-attachments/assets/5da17558-71d6-4ddb-8bf1-e7223763a934" />
 
  
 VIZ #7: Kumulatívne výdavky podľa kampánie (WINDOW FUNCTION) - AREA CHART
+
 <img width="909" height="295" alt="image" src="https://github.com/user-attachments/assets/94373c2f-25d5-4266-b404-d6cf8dcce61a" />
 <img width="945" height="433" alt="image" src="https://github.com/user-attachments/assets/d97bf3ff-a1b6-45ce-a10b-dc091ac6ae5b" />
 
 
 VIZ #8: Porovnanie CPC v čase s LAG window function - LINE CHART
+
 <img width="722" height="373" alt="image" src="https://github.com/user-attachments/assets/fffc2297-56df-4e94-add2-bf021a7ac7b9" />
 <img width="945" height="456" alt="image" src="https://github.com/user-attachments/assets/b6280688-018d-49b9-9467-221ec1fc8386" />
 
 
 VIZ #9: Ranking annoncí v 7-dňovom okne (RANK window function) - DETAILED TABLE
+
 <img width="587" height="390" alt="image" src="https://github.com/user-attachments/assets/d559c289-21fb-4379-8269-475f4d9f812b" />
 <img width="945" height="430" alt="image" src="https://github.com/user-attachments/assets/34eb0dee-1321-47be-ba22-fe55d1d74c05" />
 <img width="945" height="441" alt="image" src="https://github.com/user-attachments/assets/bf271d7b-0be8-4cc5-8778-55b5c02fda37" />
 
 
 VIZ #10: Performance Dashboard - Overview Metrics - KPI CARD
+
 <img width="754" height="453" alt="image" src="https://github.com/user-attachments/assets/77a74d4b-ae8a-44f9-a7cb-333ae013fd2c" />
 <img width="945" height="187" alt="image" src="https://github.com/user-attachments/assets/301dd7bd-21a1-49a3-b92d-7bfb84a5550b" />
 
