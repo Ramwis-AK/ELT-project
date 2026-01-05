@@ -43,11 +43,11 @@ Tieto metriky predstavujú základ pre hodnotenie efektívnosti marketingových 
 
 3. Ciele analýzy<br>
 Hlavné analytické ciele projektu:<br>
-1.	Identifikovať najefektívnejšie kampane a reklamy<br>
-2.	Porovnať nákladovosť kampaní (CPC, CPM)<br>
-3.	Analyzovať trendy výkonnosti v čase<br>
-4.	Detegovať sezónne vzory a anomálie<br>
-5.	Pripraviť dáta pre dashboardy a reporting<br>
+    1.	Identifikovať najefektívnejšie kampane a reklamy<br>
+    2.	Porovnať nákladovosť kampaní (CPC, CPM)<br>
+    3.	Analyzovať trendy výkonnosti v čase<br>
+    4.	Detegovať sezónne vzory a anomálie<br>
+    5.	Pripraviť dáta pre dashboardy a reporting<br>
 
 4. ELT architektúra<br>
 Projekt je postavený na princípe ELT, kde:<br>
